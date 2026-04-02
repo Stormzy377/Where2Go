@@ -62,4 +62,15 @@ function removePlayer(playerId) {
     }
 }
 
-module.exports = { createRoom, joinRoom, getRoom, removePlayer }
+function addSuggestion(code, playerId, playerName, place) {
+    const room = rooms[code]
+    if (!room) return { error: 'Sala não encontrada' }
+
+    const already = room.suggestions.find(s => s.playerName === playerName)
+    if (already) return { error: 'Você já fez uma sugestão' }
+
+    room.suggestions.push({ playerId, playerName, place, votes: 0 })
+    return room
+}
+
+module.exports = { createRoom, joinRoom, getRoom, removePlayer, addSuggestion }

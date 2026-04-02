@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Home from './pages/Home'
+import Room from './pages/Room'
 
 function App() {
   const [room, setRoom] = useState(null)
@@ -11,12 +12,7 @@ function App() {
   }
 
   if (room) {
-    return (
-      <div>
-        <h2>Você está na sala {room.code}</h2>
-        <pre>{JSON.stringify(room, null, 2)}</pre>
-      </div>
-    )
+    return <Room room={room} playerName={playerName} />
   }
 
   return <Home onEnterRoom={handleEnterRoom} />

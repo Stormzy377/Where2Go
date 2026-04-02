@@ -1,4 +1,4 @@
-const { createRoom, joinRoom, getRoom, removePlayer } = require('../rooms/roomManager')
+const { createRoom, joinRoom, getRoom, removePlayer, addSuggestion } = require('../rooms/roomManager')
 
 function setupSocket(io) {
 
@@ -28,6 +28,20 @@ function setupSocket(io) {
             io.to(result.code).emit('room_updated', result)
 
             console.log(`${playerName} entrou na sala ${result.code}`)
+        })
+
+        socket.on('suggest_place', ({ roomCode, place }) => {
+            const player = getRoom(roomCode)?.players.find(p => p.id === socket.id)
+            if (!player) return
+
+            const result = addSuggestion(roomCode, socket.id, player.name, place)
+            if (result.error) {
+                socket.emit('room_error', { message: result.error })
+                return
+            }
+
+            io.to(roomCode).emit('room_updated', result)
+            console.log(`${player.name} sugeriu: ${place} na sala ${roomCode}`)
         })
 
         socket.on('disconnect', () => {
