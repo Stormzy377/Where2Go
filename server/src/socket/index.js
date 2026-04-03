@@ -1,4 +1,4 @@
-const { createRoom, joinRoom, getRoom, removePlayer, addSuggestion } = require('../rooms/roomManager')
+const { createRoom, joinRoom, getRoom, removePlayer, addSuggestion, vote, finishVoting } = require('../rooms/roomManager')
 
 function setupSocket(io) {
 
@@ -42,6 +42,40 @@ function setupSocket(io) {
 
             io.to(roomCode).emit('room_updated', result)
             console.log(`${player.name} sugeriu: ${place} na sala ${roomCode}`)
+        })
+
+        socket.on('start_voting', ({ roomCode }) => {
+            const room = getRoom(roomCode)
+            if (!room) return
+            if (room.hostId !== socket.id) return
+
+            room.status = 'voting'
+            io.to(roomCode).emit('voting_started', room)
+
+            let timeLeft = 10
+
+            setTimeout(() => {
+                const timer = setInterval(() => {
+                    io.to(roomCode).emit('timer_tick', { timeLeft })
+
+                    if (timeLeft === 0) {
+                        clearInterval(timer)
+                        const finished = finishVoting(roomCode)
+                        io.to(roomCode).emit('voting_finished', finished)
+                        console.log(`Vencedor: ${finished.winner.place}`)
+                        return
+                    }
+
+                    timeLeft--
+                }, 1000)
+            }, 500)
+        })
+
+        socket.on('vote', ({ roomCode, placeIndex }) => {
+            const result = vote(roomCode, placeIndex)
+            if (result.error) return
+
+            io.to(roomCode).emit('votes_updated', result.suggestions)
         })
 
         socket.on('disconnect', () => {

@@ -73,4 +73,28 @@ function addSuggestion(code, playerId, playerName, place) {
     return room
 }
 
-module.exports = { createRoom, joinRoom, getRoom, removePlayer, addSuggestion }
+function vote(code, placeIndex) {
+    const room = rooms[code]
+    if (!room) return { error: 'Sala não encontrada' }
+    if (room.status !== 'voting') return { error: 'Votação não está ativa' }
+    if (!room.suggestions[placeIndex]) return { error: 'lugar inválido' }
+
+    room.suggestions[placeIndex].votes++
+    return room
+}
+
+function finishVoting(code) {
+    const room = rooms[code]
+    if (!room) return null
+
+    room.status = 'finished'
+
+    const winner = room.suggestions.reduce((best, current) =>
+        current.votes > best.votes ? current : best
+    )
+
+    room.winner = winner
+    return room
+}
+
+module.exports = { createRoom, joinRoom, getRoom, removePlayer, addSuggestion, vote, finishVoting }
