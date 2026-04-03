@@ -24,7 +24,7 @@ function Voting({ room: initialRoom }) {
     function handleVote(placeIndex) {
         setVoted(placeIndex)
         socket.emit('vote', {
-            roomCode: initialRomm.code,
+            roomCode: initialRoom.code,
             placeIndex
         })
     }

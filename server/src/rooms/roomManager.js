@@ -54,12 +54,24 @@ function getRoom(code) {
 function removePlayer(playerId) {
     for (const code in rooms) {
         const room = rooms[code]
+        const isHost = room.hostId === playerId
+
         room.players = room.players.filter(p => p.id !== playerId)
 
         if (room.players.length === 0) {
             delete rooms[code]
+            return { wasHost: true, roomCode: code, empty: true }
         }
+
+        if (isHost) {
+            delete rooms[code]
+            return { wasHost: true, roomCode: code, empty: false }
+        }
+
+        return { wasHost: false, roomCode: code, room }
     }
+
+    return null
 }
 
 function addSuggestion(code, playerId, playerName, place) {
@@ -89,11 +101,14 @@ function finishVoting(code) {
 
     room.status = 'finished'
 
-    const winner = room.suggestions.reduce((best, current) =>
-        current.votes > best.votes ? current : best
-    )
+    const maxVotes = Math.max(...room.suggestions.map(s => s.votes))
+    const tied = room.suggestions.filter(s => s.votes === maxVotes)
+
+    const winner = tied[Math.floor(Math.random() * tied.length)]
+    winner.wasTied = tied.length > 1
 
     room.winner = winner
+    room.tiedWith = tied.length > 1 ? tied.map(s => s.place) : null
     return room
 }
 

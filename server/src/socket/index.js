@@ -1,5 +1,7 @@
 const { createRoom, joinRoom, getRoom, removePlayer, addSuggestion, vote, finishVoting } = require('../rooms/roomManager')
 
+const activeTimers = {}
+
 function setupSocket(io) {
 
     io.on('connection', (socket) => {
@@ -24,9 +26,7 @@ function setupSocket(io) {
             }
 
             socket.join(result.code)
-
             io.to(result.code).emit('room_updated', result)
-
             console.log(`${playerName} entrou na sala ${result.code}`)
         })
 
@@ -44,32 +44,43 @@ function setupSocket(io) {
             console.log(`${player.name} sugeriu: ${place} na sala ${roomCode}`)
         })
 
-        socket.on('start_voting', ({ roomCode }) => {
-            const room = getRoom(roomCode)
-            if (!room) return
-            if (room.hostId !== socket.id) return
+        socket.on("start_voting", ({ roomCode }) => {
+          const room = getRoom(roomCode);
+          if (!room) return;
+          if (room.hostId !== socket.id) return;
 
-            room.status = 'voting'
-            io.to(roomCode).emit('voting_started', room)
+          room.status = "voting";
+          io.to(roomCode).emit("voting_started", room);
 
-            let timeLeft = 10
+          let timeLeft = 10;
 
-            setTimeout(() => {
-                const timer = setInterval(() => {
-                    io.to(roomCode).emit('timer_tick', { timeLeft })
+          const startTimer = () => {
+            activeTimers[roomCode] = setInterval(() => {
+              const currentRoom = getRoom(roomCode);
+              if (!currentRoom) {
+                clearInterval(activeTimers[roomCode]);
+                delete activeTimers[roomCode];
+                return;
+              }
 
-                    if (timeLeft === 0) {
-                        clearInterval(timer)
-                        const finished = finishVoting(roomCode)
-                        io.to(roomCode).emit('voting_finished', finished)
-                        console.log(`Vencedor: ${finished.winner.place}`)
-                        return
-                    }
+              io.to(roomCode).emit("timer_tick", { timeLeft });
 
-                    timeLeft--
-                }, 1000)
-            }, 500)
-        })
+              if (timeLeft === 0) {
+                clearInterval(activeTimers[roomCode]);
+                delete activeTimers[roomCode];
+                const finished = finishVoting(roomCode);
+                if (!finished) return;
+                io.to(roomCode).emit("voting_finished", finished);
+                console.log(`Vencedor: ${finished.winner.place}`);
+                return;
+              }
+
+              timeLeft--;
+            }, 1000);
+          };
+
+          setTimeout(startTimer, 500);
+        });
 
         socket.on('vote', ({ roomCode, placeIndex }) => {
             const result = vote(roomCode, placeIndex)
@@ -78,10 +89,22 @@ function setupSocket(io) {
             io.to(roomCode).emit('votes_updated', result.suggestions)
         })
 
-        socket.on('disconnect', () => {
-            removePlayer(socket.id)
-            console.log(`Desconectado: ${socket.id}`)
-        })
+        socket.on("disconnect", () => {
+          const result = removePlayer(socket.id);
+
+          if (result?.wasHost && !result.empty) {
+            if (activeTimers[result.roomCode]) {
+              clearInterval(activeTimers[result.roomCode]);
+              delete activeTimers[result.roomCode];
+            }
+            io.to(result.roomCode).emit("host_left");
+            console.log(
+              `Host saiu da sala ${result.roomCode} — sala encerrada`,
+            );
+          }
+
+          console.log(`Desconectado: ${socket.id}`);
+        });
     })
 }
 
