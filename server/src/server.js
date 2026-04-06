@@ -8,7 +8,7 @@ const app = express()
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://where2-go-kappa.vercel.app/"
+  "https://where2-go-kappa.vercel.app"
 ]
 
 app.use(cors({
