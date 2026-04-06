@@ -6,17 +6,23 @@ const { setupSocket } = require("./socket/index");
 
 const app = express()
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://where2-go-kappa.vercel.app/"
+]
+
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: allowedOrigins,
     methods: ['GET', 'POST']
 }))
+
 app.use(express.json())
 
 const server = http.createServer(app)
 
 const io = new Server(server, {
     cors: {
-        origin: 'http://localhost:5173',
+        origin: allowedOrigins,
         methods: ['GET', 'POST']
     }
 })
