@@ -52,8 +52,8 @@ function Voting({ room: initialRoom }) {
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "100px",
-              height: "100px",
+              width: "clamp(80px, 25vw, 100px)",
+              height: "clamp(80px, 25vw, 100px)",
               border: "3px solid #111",
               borderRadius: "50%",
               background: timerColor,
@@ -62,13 +62,16 @@ function Voting({ room: initialRoom }) {
             }}
           >
             <span
-              style={{ fontSize: "2.5rem", fontWeight: 900, color: "#111" }}
+              style={{
+                fontSize: "clamp(1.8rem, 6vw, 2.5rem)",
+                fontWeight: 900,
+                color: "#111",
+              }}
             >
               {timeLeft}
             </span>
           </div>
         </div>
-
         {/* Instrução */}
         <p
           style={{
