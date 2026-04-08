@@ -8,6 +8,7 @@ const app = express()
 
 const allowedOrigins = [
   "http://localhost:5173",
+  "https://where2-go-beta.vercel.app",
 ]
 
 app.use(cors({
