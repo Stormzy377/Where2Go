@@ -1,19 +1,21 @@
 const { createRoom, joinRoom, getRoom, removePlayer, addSuggestion, vote, finishVoting } = require('../rooms/roomManager')
 
+const { incrementRoomsCreated, incrementGamesFinished, updateOnlineUsers } = require('../stats/statsManager')
+
 const activeTimers = {}
 
 function setupSocket(io) {
 
     io.on('connection', (socket) => {
+
+        updateOnlineUsers(io.engine.clientsCount)
         console.log(`Conectado: ${socket.id}`)
 
         socket.on('create_room', ({ playerName }) => {
             const room = createRoom(socket.id, playerName)
-
             socket.join(room.code)
-
             socket.emit('room_created', room)
-
+            incrementRoomsCreated()
             console.log(`Sala criada: ${room.code} por ${playerName}`)
         })
 
@@ -70,6 +72,7 @@ function setupSocket(io) {
                 delete activeTimers[roomCode];
                 const finished = finishVoting(roomCode);
                 if (!finished) return;
+                incrementGamesFinished(finished.winner)
                 io.to(roomCode).emit("voting_finished", finished);
                 console.log(`Vencedor: ${finished.winner.place}`);
                 return;
@@ -103,6 +106,7 @@ function setupSocket(io) {
             );
           }
 
+          updateOnlineUsers(io.engine.clientsCount)
           console.log(`Desconectado: ${socket.id}`);
         });
     })

@@ -1,8 +1,11 @@
+require('dotenv').config()
+
 const express = require('express')
 const http = require('http')
 const { Server } = require('socket.io')
 const cors = require('cors')
 const { setupSocket } = require("./socket/index");
+const { getStats } = require('./stats/statsManager')
 
 const app = express()
 
@@ -29,6 +32,16 @@ const io = new Server(server, {
 
 app.get('/health', (req, res) => {
     res.json({ status: 'servidor rodando' })
+})
+
+app.get('/stats', (req, res) => {
+    const secret = req.query.secret
+
+    if (secret !== process.env.STATS_SECRET) {
+        return res.status(401).json({ error: 'Não autorizado' })
+    }
+
+    res.json(getStats())
 })
 
 app.get('/ping', (req, res) => {

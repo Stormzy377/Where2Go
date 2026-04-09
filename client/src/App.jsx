@@ -5,6 +5,7 @@ import Voting from './pages/Voting'
 import Result from './pages/Result'
 import ConnectionStatus from "./components/ConnectionStatus"
 import socket from './socket/socket'
+import Stats from "./pages/Stats"
 
 function App() {
   const [room, setRoom] = useState(null)
@@ -12,6 +13,11 @@ function App() {
   const [screen, setScreen] = useState('home')
   const [finishedRoom, setFinishedRoom] = useState(null)
   const [hostLeft, setHostLeft] = useState(false)
+
+  if (window.location.pathname === '/stats') {
+    if (window.location.pathname === '/stats')
+      return <Stats />
+  }
 
   useEffect(() => {
     socket.on('voting_started', (updatedRoom) => {
